@@ -1,9 +1,9 @@
 {
-	"name": "crafting_combinator_xeraph",
+	"name": "crafting_combinator_scruffy",
 	"version": "0.4.4",
-	"factorio_version": "1.1",
-	"title": "Crafting Combinator Xeraph's Fork",
+	"factorio_version": "2.0",
+	"title": "Crafting Combinator ScruffyLookingVoltHerder Fork",
 	"author": "LuziferSenpai, TheRustyKnife, Xeraph",
 	"description": "Fork of Crafting Combinator mod by TheRustyKnife.\n\nOriginal mod description:\nIncludes combinators that allow you to set or read the recipe of any crafting machine, get ingredients or products of a recipe and more!",
-	"dependencies": ["base >= 1.1.76", "rusty-locale-xeraph >= 0.1.0", "! crafting_combinator", "(?) crafting_combinator_xeraph_migration", "(?) crafting_combinator_xeraph_test"]
+	"dependencies": ["base >= 1.1.76", "rusty-locale >= 1.0.17", "! crafting_combinator", "(?) crafting_combinator_xeraph_migration", "(?) crafting_combinator_xeraph_test"]
 }

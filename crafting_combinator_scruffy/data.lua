@@ -1,4 +1,4 @@
-local icons = require '__rusty-locale-xeraph__.icons'
+local icons = require '__rusty-locale__.icons'
 
 local config = require 'config'
 local MOD_PATH = config.MOD_PATH
@@ -18,7 +18,7 @@ for _, image in pairs(cc.sprites) do
 	local im = image.layers[1]
 	im.filename = MOD_PATH .. '/graphics/crafting-combinator.png'
 	im.y = 0
-	im.hr_version.filename = MOD_PATH .. '/graphics/hr-crafting-combinator.png'
+	--im.hr_version.filename = MOD_PATH .. '/graphics/hr-crafting-combinator.png'
 end
 
 local cc_item = table.deepcopy(data.raw['item']['constant-combinator'])
@@ -30,20 +30,33 @@ cc_item.order = 'c[combinators]-m[crafting-combinator]'
 
 local cc_recipe = table.deepcopy(data.raw['recipe']['constant-combinator'])
 cc_recipe.name = cc.name
-cc_recipe.result = cc.name
+
+cc_recipe.results = { 
+	{type="item", name=cc.name, amount=1},
+  }
+
 table.insert(data.raw['technology']['circuit-network'].effects, {type = 'unlock-recipe', recipe = cc.name})
 
 
 local rc = table.deepcopy(data.raw['arithmetic-combinator']['arithmetic-combinator'])
 rc.name = config.RC_NAME
-rc.minable.result = rc.name
+rc.minable.results = {
+	{type="item", name=rc.name, amount=1},
+  } 
 rc.energy_source = { type = 'void' }
 rc.energy_usage_per_tick = '1W'
+
+--[[
 for direction, definition in pairs(rc.multiply_symbol_sprites) do
+
+	local test=1
+
 	definition.hr_version.filename = MOD_PATH .. '/graphics/hr-combinator-displays.png'
 	rc.multiply_symbol_sprites[direction] = definition.hr_version
 end
+]]
 
+local test=1
 local rc_item = table.deepcopy(data.raw['item']['arithmetic-combinator'])
 rc_item.name = rc.name
 rc_item.place_result = rc.name
@@ -53,7 +66,9 @@ rc_item.order = 'c[combinators]-m[recipe-combinator]'
 
 local rc_recipe = table.deepcopy(data.raw['recipe']['arithmetic-combinator'])
 rc_recipe.name = rc.name
-rc_recipe.result = rc.name
+rc_recipe.results = {
+	{type="item", name=rc.name, amount=1},
+  } 
 table.insert(data.raw['technology']['circuit-network'].effects, {type = 'unlock-recipe', recipe = rc.name})
 
 
@@ -80,7 +95,7 @@ data:extend {
 	{
 		type = 'item',
 		name = config.MODULE_CHEST_NAME,
-		flags = {'hidden'},
+		hidden=true,
 		stack_size = 1,
 		place_result = config.MODULE_CHEST_NAME,
 		icons = icons.of(cc),
@@ -89,7 +104,7 @@ data:extend {
 		type = 'container',
 		name = config.MODULE_CHEST_NAME,
 		flags = {'placeable-off-grid', 'not-blueprintable', 'not-upgradable', 'player-creation'},
-		collision_mask = {},
+		collision_mask = {layers = {}},
 		collision_box = cc.collision_box,
 		selection_box = cc.selection_box,
 		inventory_size = settings.startup[config.MODULE_CHEST_SIZE_NAME].value,
@@ -106,7 +121,7 @@ data:extend {
 		type = 'constant-combinator',
 		name = config.RC_PROXY_NAME,
 		flags = {'placeable-off-grid'},
-		collision_mask = {},
+		collision_mask = {layers = {}},
 		item_slot_count = config.RC_SLOT_COUNT,
 		circuit_wire_max_distance = 3,
 		sprites = {
@@ -125,7 +140,7 @@ data:extend {
 		type = 'lamp',
 		name = config.SIGNAL_CACHE_NAME,
 		flags = {'placeable-off-grid'},
-		collision_mask = {},
+		collision_mask = {layers = {}},
 		circuit_wire_max_distance = 3,
 		circuit_wire_connection_points = {con_point, con_point, con_point, con_point},
 		draw_circuit_wires = false,
@@ -145,7 +160,7 @@ data:extend {
 	},
 	{
 		type = 'item-subgroup',
-		name = 'crafting_combinator:signals',
+		name = 'crafting_combinator_signals',
 		group = config.GROUP_NAME,
 		order = '___',
 	},
@@ -159,7 +174,7 @@ data:extend {
 		type = 'virtual-signal',
 		name = config.TIME_SIGNAL_NAME,
 		icon = '__core__/graphics/clock-icon.png',
-		subgroup = 'crafting_combinator:signals',
+		subgroup = 'crafting_combinator_signals',
 		order = 'a[recipe-time]',
 		icon_size = 32,
 	},
@@ -167,7 +182,7 @@ data:extend {
 		type = 'virtual-signal',
 		name = config.SPEED_SIGNAL_NAME,
 		icon = MOD_PATH .. '/graphics/speed-icon.png',
-		subgroup = 'crafting_combinator:signals',
+		subgroup = 'crafting_combinator_signals',
 		order = 'b[crafting-speed]',
 		icon_size = 32,
 	},

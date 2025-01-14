@@ -21,9 +21,9 @@ local global_data_mt = {
 -- General housekeeping
 
 function _M.init_global()
-	global.rc = global.rc or {}
-	global.rc.data = global.rc.data or {}
-	global.rc.ordered = global.rc.ordered or {}
+	storage.rc = storage.rc or {}
+	storage.rc.data = storage.rc.data or {}
+	storage.rc.ordered = storage.rc.ordered or {}
 end
 
 function _M.build_machine_cache()
@@ -56,9 +56,9 @@ function _M.get_rc_slot_count()
 end
 
 function _M.on_load(skip_set_mt)
-	local global_data = global.rc.data
+	local global_data = storage.rc.data
 	if skip_set_mt then return end
-	setmetatable(global_data, global_data_mt)
+--	setmetatable(global_data, global_data_mt)
 	for _, combinator in pairs(global_data) do setmetatable(combinator, combinator_mt); end
 end
 
@@ -82,11 +82,31 @@ function _M.create(entity, tags, migrated_state)
 		last_count = 0
 	}, combinator_mt) --[[@as RcState]]
 	
+
+
+	local rcon1 = entity.get_wire_connector(defines.wire_connector_id.combinator_output_red,false)
+	local rcon2 = combinator.output_proxy.get_wire_connector(defines.wire_connector_id.circuit_red,false)
+	rcon1.connect_to(rcon2,false,defines.wire_origin.script)
+
+
+	local gcon1 = entity.get_wire_connector(defines.wire_connector_id.combinator_output_green,false)
+	local gcon2 = combinator.output_proxy.get_wire_connector(defines.wire_connector_id.circuit_green,false)
+	gcon1.connect_to(rcon2,false,defines.wire_origin.script)
+
+
+	local test=1
+
+
+
+--[[
 	entity.connect_neighbour {
 		wire = defines.wire_type.red,
-		target_entity = combinator.output_proxy,
+	target_entity = combinator.output_proxy,
 		source_circuit_id = defines.circuit_connector_id.combinator_output,
 	}
+
+
+
 	entity.connect_neighbour {
 		wire = defines.wire_type.green,
 		target_entity = combinator.output_proxy,
@@ -94,10 +114,12 @@ function _M.create(entity, tags, migrated_state)
 	}
 	combinator.output_proxy.destructible = false
 	combinator.control_behavior = combinator.output_proxy.get_or_create_control_behavior() --[[@as LuaControlBehavior]]
+
+	--]]
 	
-	global.main_uid_by_part_uid[combinator.output_proxy.unit_number] = combinator.entityUID
-	global.rc.data[entity.unit_number] = combinator
-	table.insert(global.rc.ordered, combinator)
+	storage.main_uid_by_part_uid[combinator.output_proxy.unit_number] = combinator.entityUID
+	storage.rc.data[entity.unit_number] = combinator
+	table.insert(storage.rc.ordered, combinator)
 
 	return combinator
 end
@@ -112,10 +134,10 @@ function _M.destroy(entity)
 
 	signals.cache.drop(unit_number)
 	
-	global.rc.data[unit_number] = nil
-	for k, v in pairs(global.rc.ordered) do
+	storage.rc.data[unit_number] = nil
+	for k, v in pairs(storage.rc.ordered) do
 		if v.entityUID == unit_number then
-			table.remove(global.rc.ordered, k)
+			table.remove(storage.rc.ordered, k)
 			break
 		end
 	end
@@ -123,7 +145,7 @@ end
 
 ---@param state RcState
 function _M.check_entities(state)
-	local signals_cache = global.signals.cache[state.entityUID]
+	local signals_cache = storage.signals.cache[state.entityUID]
 	if signals_cache then signals.check_signal_cache_entities(signals_cache, state.entityUID) end
 
 	if state.entity and state.entity.valid

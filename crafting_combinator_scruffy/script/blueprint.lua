@@ -1,5 +1,5 @@
 -- Script adapted from Klonan's Kontraptions mod:
--- https://github.com/Klonan/Kontraptions/blob/master/script/sign-post.lua
+-- https://lobalithub.com/Klonan/Kontraptions/blob/master/script/sign-post.lua
 
 -- Delayed tag workaround inspiration from:
 -- Janzert https://forums.factorio.com/viewtopic.php?p=572657#p572657
@@ -8,14 +8,14 @@
 local config = require 'config'
 
 local get_delayed_blueprint_tag_state = function(player_index)
-  if not global.delayed_blueprint_tag_state[player_index] then
-    global.delayed_blueprint_tag_state[player_index] = {
+  if not storage.delayed_blueprint_tag_state[player_index] then
+    storage.delayed_blueprint_tag_state[player_index] = {
       is_queued = false,
       data = {}
     }
   end
   
-  return global.delayed_blueprint_tag_state[player_index]
+  return storage.delayed_blueprint_tag_state[player_index]
 end
 
 local delayed_blueprint_tag_helper = {
@@ -66,9 +66,9 @@ local get_tag_data = function(unit_number, entity_name)
   local t
 
   if entity_name == config.CC_NAME then
-    t = global.cc.data[unit_number].settings
+    t = storage.cc.data[unit_number].settings
   else --entity_name == config.RC_NAME
-    t = global.rc.data[unit_number].settings
+    t = storage.rc.data[unit_number].settings
   end
   
   if not t then return end
@@ -146,9 +146,9 @@ end
 
 local get_combinator_data = function(unit_number, entity_name)
   if entity_name == config.CC_NAME then
-    return global.cc.data[unit_number]
+    return storage.cc.data[unit_number]
   else --entity_name == config.RC_NAME
-    return global.rc.data[unit_number]
+    return storage.rc.data[unit_number]
   end
 end
 
@@ -186,9 +186,9 @@ local on_post_entity_died = function(event)
   local ghost_name = ghost.ghost_name
   local combinator
   if ghost_name == config.CC_NAME then
-    combinator = global.cc.data[unit_number]
+    combinator = storage.cc.data[unit_number]
   elseif ghost_name == config.RC_NAME then
-    combinator = global.rc.data[unit_number]
+    combinator = storage.rc.data[unit_number]
   else
     return
   end

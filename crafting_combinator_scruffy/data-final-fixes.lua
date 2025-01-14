@@ -1,5 +1,5 @@
-local locale = require '__rusty-locale-xeraph__.locale'
-local icons = require '__rusty-locale-xeraph__.icons'
+local locale = require '__rusty-locale__.locale'
+local icons = require '__rusty-locale__.icons'
 
 local config = require 'config'
 

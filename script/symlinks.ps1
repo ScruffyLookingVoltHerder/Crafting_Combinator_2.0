@@ -1,5 +1,5 @@
 ### configuration
-$repo_path = "H:\Factorio stuffs\mod_workspace\repos\cc\mods"
+$repo_path = "C:\Users\alan\Nextcloud\Files\Alans_work\factorio_mods\Crafting_Combinator_2.0"
 
 $mod_names = @{
     main = "crafting_combinator_xeraph";
@@ -8,7 +8,7 @@ $mod_names = @{
 
 $mod_paths = @{
     game = "C:\Users\User\AppData\Roaming\Factorio\mods";
-    mod_workspace = "H:\Factorio stuffs\mod_workspace\mods"
+    mod_workspace = "C:\Users\alan\Nextcloud\Files\Alans_work\factorio_mods\Crafting_Combinator_2.0"
 }
 ### configuration ends
 

@@ -31,7 +31,7 @@ local cache_mt = {
 			__cb = entity.get_or_create_control_behavior(),
 		}
 
-		global.main_uid_by_part_uid[entity.unit_number] = self.__entity.unit_number
+		storage.main_uid_by_part_uid[entity.unit_number] = self.__entity.unit_number
 		
 		return self[key]
 	end,
@@ -39,13 +39,13 @@ local cache_mt = {
 
 
 function _M.init_global()
-	global.signals = global.signals or {}
-	global.signals.cache = global.signals.cache or {}
+	storage.signals = storage.signals or {}
+	storage.signals.cache = storage.signals.cache or {}
 end
 
 function _M.on_load(skip_set_mt)
 	if skip_set_mt then return end
-	for _, cache in pairs(global.signals.cache) do setmetatable(cache, cache_mt); end
+	for _, cache in pairs(storage.signals.cache) do setmetatable(cache, cache_mt); end
 end
 
 ---@param state SignalsCacheState
@@ -68,7 +68,7 @@ end -- currently the highest computational cost for entity validity check
 ---@param cache_state table
 ---@param uid uid  
 function _M.migrate(uid, cache_state)
-	global.signals.cache[uid] = setmetatable(cache_state, cache_mt)
+	storage.signals.cache[uid] = setmetatable(cache_state, cache_mt)
 	_M.verify(uid, cache_state)
 end
 
@@ -126,7 +126,7 @@ function _M.migrate_lamp(lamp)
 	else
 		cache.__cache_entities[lamp_type] = lamp
 		cache[lamp_type] = { __cb = cb }
-		global.main_uid_by_part_uid[lamp.unit_number] = combinator_entity.unit_number
+		storage.main_uid_by_part_uid[lamp.unit_number] = combinator_entity.unit_number
 		return true
 	end
 	-- TODO: guess value and valid fields?
@@ -149,7 +149,7 @@ function _M.verify(uid, state)
 					local lamp_cb = state[lamp_type].__cb
 					local lamp_entity = state.__cache_entities[lamp_type]
 					if lamp_cb and lamp_entity and lamp_entity.valid then
-						global.main_uid_by_part_uid[lamp_entity.unit_number] = uid
+						storage.main_uid_by_part_uid[lamp_entity.unit_number] = uid
 					else
 						state[lamp_type] = nil
 						state.__cache_entities[lamp_type] = nil
@@ -158,7 +158,7 @@ function _M.verify(uid, state)
 				end
 			end
 	else
-		global.signals.cache[uid] = nil
+		storage.signals.cache[uid] = nil
 		return 1
 	end
 end
@@ -171,42 +171,42 @@ _M.cache = {}
 ---@param entityUID uid
 ---@return SignalsCacheState cache_state Signals cache state for the cc/rc state
 function _M.cache.get(entity, circuit_id, entityUID)
-	local cache = global.signals.cache[entityUID]
+	local cache = storage.signals.cache[entityUID]
 	if not cache then
 		cache = setmetatable({
 			__entity = entity,
 			__circuit_id = circuit_id or false, -- Avoid calling __index when the id is nil
 			__cache_entities = {},
 		}, cache_mt)
-		global.signals.cache[entityUID] = cache
+		storage.signals.cache[entityUID] = cache
 	end
 	return cache
 end
 
 function _M.cache.reset(entity, name) -- not used? to reset already existing lamps?
-	local cache = global.signals.cache[entity.unit_number]
+	local cache = storage.signals.cache[entity.unit_number]
 	if cache and rawget(cache, name) then
-		global.signals.cache[entity.unit_number][name] = {
+		storage.signals.cache[entity.unit_number][name] = {
 			control_behavior = entity.get_or_create_control_behavior(),
 		}
 	end
 end
 
 function _M.cache.drop(unit_number)
-	local cache = global.signals.cache[unit_number]
+	local cache = storage.signals.cache[unit_number]
 	if cache then
 		for _, e in pairs(cache.__cache_entities) do
 			if e.valid then
-				global.main_uid_by_part_uid[e.unit_number] = nil
+				storage.main_uid_by_part_uid[e.unit_number] = nil
 				e.destroy();
 			end
 		end
-		global.signals.cache[unit_number] = nil
+		storage.signals.cache[unit_number] = nil
 	end
 end
 
 function _M.cache.move(entity)
-	local cache = global.signals.cache[entity.unit_number]
+	local cache = storage.signals.cache[entity.unit_number]
 	if cache then
 		for _, e in pairs(cache.__cache_entities) do e.teleport(entity); end
 	end

@@ -15,7 +15,7 @@ local combinator_mt = { __index = _M }
 -- index metamethod for global.cc.data to handle key not found cases
 local global_data_mt = {
 	__index = function(_, key)
-		local tname = "global.cc.data"
+		local tname = "storage.cc.data"
 		E.on_key_not_found(key, tname)
 	end,
 	__metatable = E
@@ -44,18 +44,18 @@ end
 -- General housekeeping
 
 function _M.init_global()
-	global.cc = global.cc or {}
-	global.cc.data = global.cc.data or {}
-	global.cc.ordered = global.cc.ordered or {}
-	global.cc.inserter_empty_queue = global.cc.inserter_empty_queue or {}
-	global.cc.latch_queue = global.cc.latch_queue or {state = {}, assembler = {}, container = {}}
-	global.cc.queue_count = global.cc.queue_count or 0
+	storage.cc = storage.cc or {}
+	storage.cc.data = storage.cc.data or {}
+	storage.cc.ordered = storage.cc.ordered or {}
+	storage.cc.inserter_empty_queue = storage.cc.inserter_empty_queue or {}
+	storage.cc.latch_queue = storage.cc.latch_queue or {state = {}, assembler = {}, container = {}}
+	storage.cc.queue_count = storage.cc.queue_count or 0
 end
 
 function _M.on_load(skip_set_mt)
-	local global_data = global.cc.data
+	local global_data = storage.cc.data
 	if skip_set_mt then return end
-	setmetatable(global_data, global_data_mt)
+	--setmetatable(global_data, global_data_mt)
 	for _, combinator in pairs(global_data) do setmetatable(combinator, combinator_mt); end
 end
 
@@ -75,19 +75,19 @@ function _M.schedule_action(action_type, obj, tick)
 	local queue_list
 	if action_type == 1 then
 		obj.enabled = false -- disables update() until finish latching
-		queue_list = global.cc.latch_queue.state
+		queue_list = storage.cc.latch_queue.state
 	elseif action_type == 2 then
-		queue_list = global.cc.latch_queue.container
+		queue_list = storage.cc.latch_queue.container
 	elseif action_type == 3 then
-		queue_list = global.cc.latch_queue.assembler
+		queue_list = storage.cc.latch_queue.assembler
 	elseif action_type == 4 then
-		queue_list = global.cc.inserter_empty_queue
+		queue_list = storage.cc.inserter_empty_queue
 	end
 	if queue_list and obj and tick then
 		local queue = queue_list[tick] or {}
 		queue[#queue + 1] = obj
 		queue_list[tick] = queue
-		global.cc.queue_count = global.cc.queue_count + 1
+		storage.cc.queue_count = storage.cc.queue_count + 1
 	end
 end
 
@@ -124,9 +124,9 @@ function _M.create(entity, tags, migrated_state, skip_latch)
 	combinator.module_chest.destructible = false
 	combinator.inventories.module_chest = combinator.module_chest.get_inventory(defines.inventory.chest)
 
-	global.main_uid_by_part_uid[combinator.module_chest.unit_number] = combinator.entityUID
-	global.cc.data[entity.unit_number] = combinator
-	table.insert(global.cc.ordered, combinator)
+	storage.main_uid_by_part_uid[combinator.module_chest.unit_number] = combinator.entityUID
+	storage.cc.data[entity.unit_number] = combinator
+	table.insert(storage.cc.ordered, combinator)
 
 	if migrated_state then
 		combinator.assembler = migrated_state.assembler
@@ -152,14 +152,14 @@ end
 -- if a cc is marked for deconstruction? (this should not happen because of 'not-deconstructable' flag
 
 function _M.on_module_chest_marked_for_decon(entity, current)
-	local combinator = global.cc.data[global.main_uid_by_part_uid[entity.unit_number]]
+	local combinator = storage.cc.data[storage.main_uid_by_part_uid[entity.unit_number]]
 	if not combinator then return end -- why is deconstruction event firing before cloning event?
 	combinator.enabled = false
 	combinator:update(nil, current)
 end
 
 function _M.on_module_chest_cancel_decon(entity, current)
-	local combinator = global.cc.data[global.main_uid_by_part_uid[entity.unit_number]]
+	local combinator = storage.cc.data[storage.main_uid_by_part_uid[entity.unit_number]]
 	if not combinator then return end -- probably need to hack this too
 	combinator.enabled = true
 	combinator:update(nil, current)
@@ -176,10 +176,10 @@ function _M.destroy(entity)
 
 	signals.cache.drop(unit_number)
 
-	global.cc.data[unit_number] = nil
-	for k, v in pairs(global.cc.ordered) do
+	storage.cc.data[unit_number] = nil
+	for k, v in pairs(storage.cc.ordered) do
 		if v.entityUID == unit_number then
-			table.remove(global.cc.ordered, k)
+			table.remove(storage.cc.ordered, k)
 			break
 		end
 	end
@@ -192,7 +192,7 @@ end
 function _M.mine_module_chest(uid, player_index)
 	if player_index then
 		local player = game.get_player(player_index) --[[@as LuaPlayer]]
-		local combinator = global.cc.data[uid]
+		local combinator = storage.cc.data[uid]
 		if player.mine_entity(combinator.module_chest) == true then
 			return true
 		else
@@ -208,22 +208,22 @@ function _M.mine_module_chest(uid, player_index)
 			combinator.entityUID = new_uid
 
 			-- Update signals cache
-			local signals_cache = global.signals.cache[uid]
+			local signals_cache = storage.signals.cache[uid]
 			if signals_cache then
 				signals_cache.__entity = combinator.entity
-				global.signals.cache[new_uid] = signals_cache
-				global.signals.cache[uid] = nil
+				storage.signals.cache[new_uid] = signals_cache
+				storage.signals.cache[uid] = nil
 			end
 
 			for _, connection in pairs(old_entity.circuit_connection_definitions) do
 				combinator.entity.connect_neighbour(connection)
 			end
 
-			global.cc.data[new_uid] = combinator
-			global.cc.data[uid] = nil
+			storage.cc.data[new_uid] = combinator
+			storage.cc.data[uid] = nil
 
 			-- Update main_uid_by_part_uid
-			global.main_uid_by_part_uid[combinator.module_chest.unit_number] = new_uid
+			storage.main_uid_by_part_uid[combinator.module_chest.unit_number] = new_uid
 
 			old_entity.destroy()
 			return false
@@ -241,7 +241,7 @@ function _M.update_assemblers(surface, assembler, is_destroyed)
 		name = config.CC_NAME,
 	}
 	for _, entity in pairs(combinators) do
-		local combinator = global.cc.data[entity.unit_number]
+		local combinator = storage.cc.data[entity.unit_number]
 		if not combinator then return end
 		if is_destroyed then
 			if assembler == combinator.assembler then
@@ -264,7 +264,7 @@ function _M.update_chests(surface, chest, is_destroyed)
 		name = config.CC_NAME,
 	}
 	for _, entity in pairs(combinators) do
-		local combinator = global.cc.data[entity.unit_number]
+		local combinator = storage.cc.data[entity.unit_number]
 		if not combinator then return end
 		if is_destroyed then
 			if chest == combinator.chest then
@@ -283,7 +283,7 @@ function params:clear()
 end
 
 function _M.check_entities(state)
-	local signals_cache = global.signals.cache[state.entityUID]
+	local signals_cache = storage.signals.cache[state.entityUID]
 	if signals_cache then signals.check_signal_cache_entities(signals_cache, state.entityUID) end
 
 	if state.entity and state.entity.valid
@@ -297,8 +297,8 @@ end
 
 -- called during `on_configuration_changed` to reset cc/rc with invalid recipes
 function _M.check_recipes()
-	for i=1,#global.cc.ordered do
-		local state = global.cc.ordered[i]
+	for i=1,#storage.cc.ordered do
+		local state = storage.cc.ordered[i]
 		if state.last_recipe and not(state.last_recipe.valid) then
 			state.last_recipe = nil
 			state.last_assembler_recipe = nil

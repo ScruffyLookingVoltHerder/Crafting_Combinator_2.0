@@ -26,27 +26,27 @@ local function on_load(forced, skip_set_mt)
 	clone_helper.on_load()
 
 	-- localise globals
-	global_cc = global.cc
-	global_cc_ordered = global.cc.ordered
-	global_rc_ordered = global.rc.ordered
-	inserter_empty_queue = global.cc.inserter_empty_queue
-	latch_queue = global.cc.latch_queue
+	global_cc = storage.cc
+	global_cc_ordered = storage.cc.ordered
+	global_rc_ordered = storage.rc.ordered
+	inserter_empty_queue = storage.cc.inserter_empty_queue
+	latch_queue = storage.cc.latch_queue
 	
 	if remote.interfaces['PickerDollies'] then
 		script.on_event(remote.call('PickerDollies', 'dolly_moved_entity_id'), function(event)
 			local entity = event.moved_entity
 			local combinator
-			if entity.name == config.CC_NAME then combinator = global.cc.data[entity.unit_number]
-			elseif entity.name == config.RC_NAME then combinator = global.rc.data[entity.unit_number]; end
+			if entity.name == config.CC_NAME then combinator = storage.cc.data[entity.unit_number]
+			elseif entity.name == config.RC_NAME then combinator = storage.rc.data[entity.unit_number]; end
 			if combinator then combinator:update_inner_positions(); end
 		end)
 	end
 end
 
 local function init_global()
-	global.delayed_blueprint_tag_state = {}
-	global.clone_placeholder = {combinator = {count = 0}, cache = {count = 0}, timestamp = {}}
-	global.main_uid_by_part_uid = {}
+	storage.delayed_blueprint_tag_state = {}
+	storage.clone_placeholder = {combinator = {count = 0}, cache = {count = 0}, timestamp = {}}
+	storage.main_uid_by_part_uid = {}
 end
 
 local function on_init()
@@ -182,7 +182,7 @@ local function on_destroyed(event) -- on_entity_died, on_player_mined_entity, on
 		local module_chest = global_cc.data[cc_uid].module_chest
 		local module_chest_uid = module_chest.unit_number
 		if event_name == defines.events.on_player_mined_entity then
-			local cc_state = global.cc.data[cc_uid]
+			local cc_state = storage.cc.data[cc_uid]
 			-- Check module_chest_mined_by_player tag
 			-- Skip module_chest mining if this event originated from module_chest mining
 			if not cc_state.module_chest_mined_by_player then
@@ -211,7 +211,7 @@ local function on_destroyed(event) -- on_entity_died, on_player_mined_entity, on
 		if event_name ~= defines.events.on_entity_died then
 			cc_control.destroy(entity)
 		end
-		global.main_uid_by_part_uid[module_chest_uid] = nil
+		storage.main_uid_by_part_uid[module_chest_uid] = nil
 	elseif entity_name == config.MODULE_CHEST_NAME then
 		local module_chest_uid = entity.unit_number
 		if event_name == defines.events.on_player_mined_entity then
@@ -221,7 +221,7 @@ local function on_destroyed(event) -- on_entity_died, on_player_mined_entity, on
 
 			-- Nanobots uses player.mine_entity() for automated deconstruction
 			-- Hence the need to do a callback if this event is not triggered from cc's on_player_mined_entity event
-			local cc_uid = global.main_uid_by_part_uid[module_chest_uid]
+			local cc_uid = storage.main_uid_by_part_uid[module_chest_uid]
 			local cc_state = cc_uid and global_cc.data[cc_uid]
 			-- Check cc_mined_by_player tag
 			if cc_state and not cc_state.cc_mined_by_player then
@@ -241,15 +241,15 @@ local function on_destroyed(event) -- on_entity_died, on_player_mined_entity, on
 			end
 		elseif event_name == defines.events.on_robot_mined_entity
 		or event_name == defines.events.script_raised_destroy then
-			local cc_entity = global_cc.data[global.main_uid_by_part_uid[module_chest_uid]].entity
+			local cc_entity = global_cc.data[storage.main_uid_by_part_uid[module_chest_uid]].entity
 			if cc_entity and cc_entity.valid then
 				cc_control.destroy(cc_entity.unit_number)
 				cc_entity.destroy()
 			end
 		end
-		global.main_uid_by_part_uid[module_chest_uid] = nil
+		storage.main_uid_by_part_uid[module_chest_uid] = nil
 	elseif entity_name == config.RC_NAME then
-		local output_proxy = global.rc.data[entity.unit_number].output_proxy
+		local output_proxy = storage.rc.data[entity.unit_number].output_proxy
 		local output_proxy_uid = output_proxy.unit_number
 		if event_name == defines.events.on_entity_died
 		or event_name == defines.events.script_raised_destroy
@@ -260,17 +260,17 @@ local function on_destroyed(event) -- on_entity_died, on_player_mined_entity, on
 		if event_name ~= defines.events.on_entity_died then -- need state data until post_entity_died
 			rc_control.destroy(entity)
 		end
-		global.main_uid_by_part_uid[output_proxy_uid] = nil
+		storage.main_uid_by_part_uid[output_proxy_uid] = nil
 	elseif entity_name == config.RC_PROXY_NAME then
 		local uid = entity.unit_number
 		if event_name == defines.events.script_raised_destroy then
-			local rc_entity = global.rc.data[global.main_uid_by_part_uid[uid]].entity
+			local rc_entity = storage.rc.data[storage.main_uid_by_part_uid[uid]].entity
 			rc_control.destroy(rc_entity.unit_number)
 			rc_entity.destroy()
 		end
-		global.main_uid_by_part_uid[uid] = nil
+		storage.main_uid_by_part_uid[uid] = nil
 	elseif entity_name == config.SIGNAL_CACHE_NAME then
-		global.main_uid_by_part_uid[entity.unit_number] = nil
+		storage.main_uid_by_part_uid[entity.unit_number] = nil
 	else
 		if entity_type == 'assembling-machine' then
 			cc_control.update_assemblers(entity_surface, entity, true)
@@ -376,7 +376,7 @@ script.on_event(defines.events.on_entity_settings_pasted, function(event)
 	if event.source.name == config.CC_NAME and event.destination.name == config.CC_NAME then
 		source, destination = global_cc.data[event.source.unit_number], global_cc.data[event.destination.unit_number]
 	elseif event.source.name == config.RC_NAME and event.destination.name == config.RC_NAME then
-		source, destination = global.rc.data[event.source.unit_number], global.rc.data[event.destination.unit_number]
+		source, destination = storage.rc.data[event.source.unit_number], storage.rc.data[event.destination.unit_number]
 	else return; end
 	
 	destination.settings = util.deepcopy(source.settings)

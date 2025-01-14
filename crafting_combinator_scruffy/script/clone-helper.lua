@@ -19,16 +19,16 @@ local ph_combinator, ph_cache, ph_timestamp, main_uid_by_part_uid
 local global_cc_data, global_cc_ordered, global_rc_data, global_rc_ordered, global_signals_cache
 
 local on_load = function()
-    ph_combinator = global.clone_placeholder.combinator
-    ph_cache = global.clone_placeholder.cache
-    ph_timestamp = global.clone_placeholder.timestamp
-    main_uid_by_part_uid = global.main_uid_by_part_uid
+    ph_combinator = storage.clone_placeholder.combinator
+    ph_cache = storage.clone_placeholder.cache
+    ph_timestamp = storage.clone_placeholder.timestamp
+    main_uid_by_part_uid = storage.main_uid_by_part_uid
 
-    global_cc_data = global.cc.data
-    global_cc_ordered = global.cc.ordered
-    global_rc_data = global.rc.data
-    global_rc_ordered = global.rc.ordered
-    global_signals_cache = global.signals.cache
+    global_cc_data = storage.cc.data
+    global_cc_ordered = storage.cc.ordered
+    global_rc_data = storage.rc.data
+    global_rc_ordered = storage.rc.ordered
+    global_signals_cache = storage.signals.cache
 end
 
 --- ph key lookup, used in update_ph()
